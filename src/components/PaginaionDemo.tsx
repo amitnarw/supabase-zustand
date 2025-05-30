@@ -30,8 +30,8 @@ export function PaginationDemo({
         {Array.from({ length: Math.ceil(count / pageSize) }).map((_, index) => (
           <PaginationItem key={index}>
             <p
-              className={`px-3.5 py-1.5 rounded-lg cursor-pointer hover:bg-gray-100 duration-300 ${
-                index + 1 === page && "border"
+              className={`px-3.5 py-1.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 duration-300 ${
+                index + 1 === page && "border border-gray-300 dark:border-gray-600"
               }`}
               onClick={() => {
                 setPage(index + 1);

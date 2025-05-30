@@ -25,7 +25,11 @@ const Home = () => {
   return (
     <div className="bg-white dark:bg-black">
       {isStateLoading ? (
-        <SkeletonCard />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
+          {Array.from({ length: 6 }).map((item) => (
+            <SkeletonCard />
+          ))}
+        </div>
       ) : (
         <div className="flex flex-wrap gap-4 p-4 justify-center h-full">
           {productList?.map((item, index) => (
@@ -80,16 +84,18 @@ const Home = () => {
           ))}
         </div>
       )}
-      <div className="py-5">
-        <PaginationDemo
-          page={page}
-          pageSize={pageSize}
-          setPage={setPage}
-          setPageSize={setPageSize}
-          count={count}
-          getAllProduct={getAllProduct}
-        />
-      </div>
+      {!isStateLoading && (
+        <div className="py-5">
+          <PaginationDemo
+            page={page}
+            pageSize={pageSize}
+            setPage={setPage}
+            setPageSize={setPageSize}
+            count={count}
+            getAllProduct={getAllProduct}
+          />
+        </div>
+      )}
     </div>
   );
 };

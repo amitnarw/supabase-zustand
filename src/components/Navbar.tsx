@@ -30,7 +30,7 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="flex items-center justify-end gap-2 fixed pt-5 pb-4 z-100 w-full top-0 bg-white dark:bg-[#262626] shadow-xl">
+    <div className="flex items-center justify-end gap-2 fixed pt-5 pb-4 z-100 w-full top-0 bg-white dark:bg-[#262626] shadow-xl px-30">
       <ul className="flex flex-row gap-2">
         <li className="mt-[-6px]">
           <ModeToggle />
