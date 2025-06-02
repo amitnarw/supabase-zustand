@@ -29,6 +29,8 @@ interface StoreTypes {
   setTheme: (theme: string) => void;
   logout: () => void;
   getAllProduct: () => void;
+  totalCart: number;
+  getTotalCartCount: (value: number) => void;
 }
 
 const useStore = create<StoreTypes>((set, get) => ({
@@ -73,7 +75,6 @@ const useStore = create<StoreTypes>((set, get) => ({
     set({ user: null, isStateLoading: false });
   },
   getAllProduct: async () => {
-    console.log("first");
     set({ isStateLoading: true });
     const { data, error, count } = await supabase
       .from("products")
@@ -91,6 +92,23 @@ const useStore = create<StoreTypes>((set, get) => ({
     } else {
       set({ productList: data, isStateLoading: false, count: count ?? 0 });
     }
+  },
+  totalCart: 0,
+  getTotalCartCount: async (user_id: number) => {
+    const { error, count } = await supabase
+      .from("cart")
+      .select("*", { count: "exact" })
+      .eq("user_id", user_id);
+    if (error) {
+      set({
+        error: error?.message ?? "ERROR",
+      });
+    }
+    set({ totalCart: count || 0 });
+  },
+  getCartItems: async (user_id: number) => {
+    set({ isStateLoading: true });
+    const { data, error } = await supabase.from("cart").select("*");
   },
 }));
 

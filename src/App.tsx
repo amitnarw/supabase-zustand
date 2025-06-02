@@ -14,6 +14,8 @@ import About from "./page/About";
 import Logout from "./page/Logout";
 import Navbar from "./components/Navbar";
 import Contact from "./page/Contact";
+import PaymentSuccess from "./page/PaymentSuccess";
+import PaymentFailed from "./page/PaymentFailed";
 
 function App() {
   const { user, isStateLoading, initializeUser } = useStore();
@@ -68,6 +70,8 @@ function App() {
             ></Route>
             <Route path="/contact" element={<Contact />}></Route>
             <Route path="/about" element={<About />}></Route>
+            <Route path="/payment-success" element={<PaymentSuccess />}></Route>
+            <Route path="/payment-failed" element={<PaymentFailed />}></Route>
             <Route path="*" element={<NotFound />}></Route>
           </Routes>
         </div>
