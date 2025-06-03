@@ -1,14 +1,23 @@
 import { ModeToggle } from "./mode-toggle";
 import { Link } from "react-router";
 import useStore from "@/utils/zustand_store";
+import { useEffect } from "react";
+import { ShoppingCart } from "lucide-react";
 
 const Navbar = () => {
-  const { user } = useStore();
+  const { user, totalCart, getCart } = useStore();
+
+  useEffect(() => {
+    if (user) {
+      getCart();
+    }
+  }, [user]);
 
   const menuList = [
     { title: "Home", route: "/", showTo: "loggedIn" },
     { title: "Contact us", route: "/contact", showTo: "all" },
     { title: "About us", route: "/about", showTo: "all" },
+    { title: "Orders", route: "/orders", showTo: "loggedIn" },
     {
       title: "Logout",
       route: "/logout",
@@ -21,6 +30,7 @@ const Navbar = () => {
       showTo: "loggedOut",
       style: "bg-green-500 text-white",
     },
+    { title: "Cart", route: "/cart", showTo: "loggedIn" },
     {
       title: "Register",
       route: "/register",
@@ -36,11 +46,12 @@ const Navbar = () => {
           <ModeToggle />
         </li>
         {menuList?.map(
-          (item) =>
+          (item, index) =>
             ((user && item?.showTo === "loggedIn") ||
               (!user && item?.showTo === "loggedOut") ||
-              item?.showTo === "all") && (
-              <li key={item?.route}>
+              item?.showTo === "all") &&
+            (item?.title !== "Cart" ? (
+              <li key={item?.route + index}>
                 <Link
                   to={item?.route}
                   className={`${
@@ -52,7 +63,20 @@ const Navbar = () => {
                   {item?.title}
                 </Link>
               </li>
-            )
+            ) : (
+              <li key={item?.route + index}>
+                <Link to={item?.route} className="relative">
+                  <p className="mt-1 mx-2">
+                    {totalCart > 0 && (
+                      <span className="bg-red-500 text-white rounded-full text-[10px] py-0.5 px-1.5 absolute right-[-5px] top-[-10px]">
+                        {totalCart}
+                      </span>
+                    )}
+                    <ShoppingCart size={20} />
+                  </p>
+                </Link>
+              </li>
+            ))
         )}
       </ul>
     </div>

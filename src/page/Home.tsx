@@ -1,7 +1,7 @@
 import { PaginationDemo } from "@/components/PaginaionDemo";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import useStore from "@/utils/zustand_store";
-import { Heart } from "lucide-react";
+import { Heart, ShoppingCart, Trash } from "lucide-react";
 import { useEffect } from "react";
 
 const Home = () => {
@@ -14,6 +14,8 @@ const Home = () => {
     setPage,
     setPageSize,
     count,
+    addToCart,
+    removeFromCart,
   } = useStore();
 
   useEffect(() => {
@@ -26,8 +28,8 @@ const Home = () => {
     <div className="bg-white dark:bg-black">
       {isStateLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
-          {Array.from({ length: 6 }).map((item) => (
-            <SkeletonCard />
+          {Array.from({ length: 6 }).map((_, index) => (
+            <SkeletonCard key={index} />
           ))}
         </div>
       ) : (
@@ -42,8 +44,28 @@ const Home = () => {
                   Discount
                 </div>
               )}
-              <button className="absolute top-2 right-2 text-gray-500 hover:text-red-500 z-10">
+              <button className="absolute top-2 right-2 text-purple-900 duration-300 hover:bg-purple-400 bg-white/80 p-2 rounded-full z-10 cursor-pointer">
                 <Heart size={20} />
+              </button>
+              <button
+                className={`absolute top-12 right-2 ${
+                  item?.cart?.length > 0
+                    ? "text-white hover:bg-red-600 bg-red-400"
+                    : "text-purple-900 hover:bg-purple-400 bg-white/80"
+                } duration-300 p-2 rounded-full z-10 cursor-pointer`}
+                onClick={() => {
+                  if (item?.cart?.length > 0) {
+                    removeFromCart(item?.id);
+                  } else {
+                    addToCart(item?.id);
+                  }
+                }}
+              >
+                {item?.cart?.length > 0 ? (
+                  <Trash size={20} />
+                ) : (
+                  <ShoppingCart size={20} />
+                )}
               </button>
               <img
                 src={item?.image}

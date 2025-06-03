@@ -8,7 +8,6 @@ import ThemeStartup from "./utils/theme-service";
 import useStore from "./utils/zustand_store";
 import NotFound from "./page/NotFound";
 import { useEffect } from "react";
-import LoadingIcon from "./components/LoadingIcon";
 import type { JSX } from "react/jsx-runtime";
 import About from "./page/About";
 import Logout from "./page/Logout";
@@ -16,36 +15,48 @@ import Navbar from "./components/Navbar";
 import Contact from "./page/Contact";
 import PaymentSuccess from "./page/PaymentSuccess";
 import PaymentFailed from "./page/PaymentFailed";
+import Cart from "./page/Cart";
+import Orders from "./page/Orders";
+import LoadingSmall from "./components/LoadingSmall";
 
 function App() {
-  const { user, isStateLoading, initializeUser } = useStore();
+  const { user, isUserDataLoading, initializeUser } = useStore();
 
   useEffect(() => {
     initializeUser();
   }, []);
 
   const CheckProtectedRoutes = (component: JSX.Element, auth: boolean) => {
-    if (user && auth) {
-      return <Navigate to={"/"} replace />;
-    } else if (user && !auth) {
-      return component;
-    } else if (!user && auth) {
-      return component;
-    } else if (!user && !auth) {
-      const hash = window.location.hash;
-      if (hash.includes("access_token")) {
+    if (!isUserDataLoading) {
+      if (user && auth) {
+        return <Navigate to={"/"} replace />;
+      } else if (user && !auth) {
         return component;
+      } else if (!user && auth) {
+        return component;
+      } else if (!user && !auth) {
+        const hash = window.location.hash;
+        if (hash.includes("access_token")) {
+          return component;
+        } else {
+          return <Navigate to={"/login"} replace />;
+        }
       } else {
-        return <Navigate to={"/login"} replace />;
+        return component;
       }
-    } else {
-      return component;
     }
   };
 
+  if (isUserDataLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <LoadingSmall />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* {isStateLoading && <LoadingIcon />} */}
       <BrowserRouter>
         <Toaster />
         <ThemeStartup />
@@ -67,6 +78,14 @@ function App() {
             <Route
               path="/logout"
               element={CheckProtectedRoutes(<Logout />, false)}
+            ></Route>
+            <Route
+              path="/cart"
+              element={CheckProtectedRoutes(<Cart />, false)}
+            ></Route>
+            <Route
+              path="/orders"
+              element={CheckProtectedRoutes(<Orders />, false)}
             ></Route>
             <Route path="/contact" element={<Contact />}></Route>
             <Route path="/about" element={<About />}></Route>
