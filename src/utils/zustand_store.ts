@@ -39,60 +39,83 @@ export interface OrdersData {
   ];
 }
 
+export interface ProductList {
+  id: number;
+  created_at: Date;
+  cart: [
+    {
+      product_id: number;
+    }
+  ];
+  name: string;
+  description: string;
+  brand: string;
+  original_price: number;
+  discounted_price: number;
+  image: string;
+  avg_rating: number;
+  quantity: number;
+}
+
+export interface CartItems {
+  id: number;
+  product_id: number;
+  user_id: string;
+  quantity: number;
+  products: {
+    id: number;
+    name: string;
+    brand: string;
+    image: string;
+    quantity: number;
+    avg_rating: string;
+    description: string;
+    original_price: number;
+    discounted_price: number;
+  };
+}
+
 interface StoreTypes {
   isUserDataLoading: boolean;
   user: any | null;
   theme: string;
   showToast: (value: string) => void;
-  isStateLoading: boolean;
-  productList: {
-    id: number;
-    created_at: Date;
-    cart: [
-      {
-        product_id: number;
-      }
-    ];
-    name: string;
-    description: string;
-    brand: string;
-    original_price: number;
-    discounted_price: number;
-    image: string;
-    avg_rating: number;
-    quantity: number;
-  }[];
   error: string | null;
   page: number;
   pageSize: number;
   setPage: (state: number) => void;
   setPageSize: (state: number) => void;
-  count: number;
-  setIsStateLoading: (state: boolean) => void;
 
+  setUserData: (data: any, sessionData: any) => void;
   initializeUser: () => void;
+  checkUserSessionLocal: () => void;
   setTheme: (theme: string) => void;
   logout: () => void;
-  getAllProduct: () => void;
-  totalCart: number;
-  getCart: () => void;
-  cartItems: {
-    id: number;
-    product_id: number;
-    user_id: string;
-    quantity: number;
-    products: {
-      id: number;
-      name: string;
-      brand: string;
-      image: string;
-      quantity: number;
-      avg_rating: string;
-      description: string;
-      original_price: number;
-      discounted_price: number;
-    };
-  }[];
+
+  isAllProductLoading: boolean;
+  allProducts: {
+    data: ProductList[] | null;
+    count: number | null;
+    error: any;
+  };
+  getAllProduct: () => Promise<{
+    data: ProductList[] | null;
+    count: number | null;
+    error: any;
+  }>;
+
+  cartData: {
+    data: CartItems[] | null;
+    count: number | null;
+    error: any;
+  };
+  isGetCartLoading: boolean;
+  getCart: () => Promise<{
+    data: CartItems[] | null;
+    count: number | null;
+    error: any;
+  }>;
+
   addToCartLoading: boolean;
   addToCart: (product_id: number) => void;
   removeFromCart: (product_id: number) => void;
@@ -109,6 +132,7 @@ interface StoreTypes {
   checkPaymentStatusDatabase: (
     session_id: string
   ) => Promise<{ data: any; error: any }>;
+  isAllOrdersLoading: boolean;
   getAllOrders: () => Promise<{
     data: OrdersData[] | null;
     error: any;
@@ -122,22 +146,30 @@ const useStore = create<StoreTypes>((set, get) => ({
   showToast: (value) => {
     toast(value);
   },
-  isStateLoading: false,
-  productList: [],
   error: null,
   page: 1,
   pageSize: 9,
   setPage: (state: number) => set({ page: state }),
   setPageSize: (state: number) => set({ pageSize: state }),
-  count: 0,
-  setIsStateLoading: (state: boolean) => set({ isStateLoading: state }),
 
+  setUserData: (userData: any) => {
+    set({ user: userData });
+  },
   initializeUser: async () => {
     set({ isUserDataLoading: true });
     const {
       data: { user },
     } = await supabase.auth.getUser();
     set({ user: user ?? null, isUserDataLoading: false });
+  },
+
+  checkUserSessionLocal: async () => {
+    set({ isUserDataLoading: true });
+    const { data } = await supabase.auth.getSession();
+    set({
+      user: data?.session?.user,
+      isUserDataLoading: false,
+    });
   },
   setTheme: (theme: string) => {
     set(() => ({ theme }));
@@ -155,46 +187,45 @@ const useStore = create<StoreTypes>((set, get) => ({
     if (error) {
       console.log(error?.message);
     }
-    set({ user: null, isStateLoading: false });
+    set({ user: null });
   },
-  getAllProduct: async (useLoading?: boolean) => {
-    if (useLoading === false) {
-      set({ isStateLoading: true });
-    }
+  isAllProductLoading: false,
+  allProducts: {
+    data: null,
+    count: null,
+    error: "",
+  },
+  getAllProduct: async () => {
+    set({ isAllProductLoading: true });
     const { data, error, count } = await supabase
       .from("products")
-      .select(`*, cart (product_id)`, { count: "exact" })
-      .range(
-        (get().page - 1) * get().pageSize,
-        get().page * get().pageSize - 1
-      );
-
-    if (error) {
-      set({
-        error: error?.message ?? "ERROR",
-        isStateLoading: false,
-      });
-    } else {
-      set({ productList: data, isStateLoading: false, count: count ?? 0 });
-    }
+      .select(`*, cart (user_id, product_id)`, { count: "exact" })
+      .range((get().page - 1) * get().pageSize, get().page * get().pageSize - 1)
+      .eq("cart.user_id", get().user.id);
+    set({ isAllProductLoading: false, allProducts: { data, count, error } });
+    return { data, count, error };
   },
-  totalCart: 0,
+
+  cartData: {
+    data: null,
+    count: null,
+    error: "",
+  },
+  isGetCartLoading: false,
   getCart: async () => {
+    set({ isGetCartLoading: true });
     const { error, data, count } = await supabase
       .from("cart")
       .select(`*, products (*)`, { count: "exact" })
       .eq("user_id", get().user?.id)
       .order("id", { ascending: true });
-    if (error) {
-      set({
-        error: error?.message ?? "ERROR",
-      });
-    }
     set({
-      cartItems: data || [],
-      isStateLoading: false,
-      totalCart: count || 0,
+      isGetCartLoading: false,
     });
+    set({
+      cartData: { data, count, error },
+    });
+    return { data, error, count };
   },
   cartItems: [],
   addToCartLoading: false,
@@ -206,12 +237,12 @@ const useStore = create<StoreTypes>((set, get) => ({
     if (error) {
       set({
         error: error?.message ?? "ERROR",
-        addToCartLoading: false,
       });
     } else {
       get().getCart();
       get().getAllProduct();
     }
+    set({ addToCartLoading: true });
   },
   removeFromCart: async (product_id: number) => {
     set({ addToCartLoading: true });
@@ -222,14 +253,15 @@ const useStore = create<StoreTypes>((set, get) => ({
     if (error) {
       set({
         error: error?.message ?? "ERROR",
-        addToCartLoading: false,
       });
     } else {
       get().getCart();
       get().getAllProduct();
     }
+    set({ addToCartLoading: true });
   },
   changeQuantity: async (product_id: number, quantity: number) => {
+    set({ addToCartLoading: true });
     const { error } = await supabase
       .from("cart")
       .update({ quantity })
@@ -237,11 +269,11 @@ const useStore = create<StoreTypes>((set, get) => ({
     if (error) {
       set({
         error: error?.message ?? "ERROR",
-        addToCartLoading: false,
       });
     } else {
       get().getCart();
     }
+    set({ addToCartLoading: false });
   },
   isCheckoutLoading: false,
   handleCheckout: async (structuredData: any, total_amount: number) => {
@@ -298,13 +330,14 @@ const useStore = create<StoreTypes>((set, get) => ({
       .eq("session_id", session_id);
     return { data, error };
   },
+  isAllOrdersLoading: false,
   getAllOrders: async () => {
-    set({ isStateLoading: true });
+    set({ isAllOrdersLoading: true });
     const { data, error } = await supabase
       .from("orders")
       .select(`*, order_items(*), payments (*)`)
       .eq("user_id", get().user?.id);
-    set({ isStateLoading: false });
+    set({ isAllOrdersLoading: false });
     return { data, error };
   },
 }));

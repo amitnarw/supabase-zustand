@@ -1,17 +1,24 @@
 import { ModeToggle } from "./mode-toggle";
 import { Link } from "react-router";
 import useStore from "@/utils/zustand_store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const Navbar = () => {
-  const { user, totalCart, getCart } = useStore();
+  const { user, getCart } = useStore();
+  const [cartCount, setCartCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
-      getCart();
+      getAllCartItems();
     }
-  }, [user]);
+  }, []);
+
+  const getAllCartItems = async () => {
+    const { count } = await getCart();
+    setCartCount(count);
+  };
 
   const menuList = [
     { title: "Home", route: "/", showTo: "loggedIn" },
@@ -35,13 +42,28 @@ const Navbar = () => {
       title: "Register",
       route: "/register",
       showTo: "loggedOut",
-      style: "bg-gray-800 text-white",
+      style: "bg-black text-white dark:bg-white dark:text-black",
     },
   ];
 
   return (
-    <div className="flex items-center justify-end gap-2 fixed pt-5 pb-4 z-100 w-full top-0 bg-white dark:bg-[#262626] shadow-xl px-30">
-      <ul className="flex flex-row gap-2">
+    <div className="flex items-center justify-end gap-2 fixed pt-5 pb-4 z-100 w-full top-0 bg-white dark:bg-[#262626] shadow-xl px-5 sm:px-16 lg:px-30">
+      <div className="flex flex-row gap-2 md:hidden">
+        <SidebarTrigger />
+        {user && (
+          <Link to={"/cart"} className="relative">
+            <p className="mt-1 mx-2">
+              {cartCount && cartCount > 0 && (
+                <span className="bg-red-500 text-white rounded-full text-[10px] py-0.5 px-1.5 absolute right-[-5px] top-[-10px]">
+                  {cartCount}
+                </span>
+              )}
+              <ShoppingCart size={20} />
+            </p>
+          </Link>
+        )}
+      </div>
+      <ul className="flex-row gap-2 hidden md:flex">
         <li className="mt-[-6px]">
           <ModeToggle />
         </li>
@@ -67,9 +89,9 @@ const Navbar = () => {
               <li key={item?.route + index}>
                 <Link to={item?.route} className="relative">
                   <p className="mt-1 mx-2">
-                    {totalCart > 0 && (
+                    {cartCount && cartCount > 0 && (
                       <span className="bg-red-500 text-white rounded-full text-[10px] py-0.5 px-1.5 absolute right-[-5px] top-[-10px]">
-                        {totalCart}
+                        {cartCount}
                       </span>
                     )}
                     <ShoppingCart size={20} />

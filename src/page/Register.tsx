@@ -1,5 +1,4 @@
 import LoadingIcon from "@/components/LoadingIcon";
-import Navbar from "@/components/Navbar";
 import { RegisterForm } from "@/components/register-form";
 import supabase from "@/utils/supabase";
 import { useState, type FormEvent } from "react";
@@ -56,7 +55,7 @@ const Register = () => {
   return (
     <>
       <RegisterForm
-        className="w-[500px] m-auto mt-20"
+        className="max-w-[500px] min-w-[300px] px-5 m-auto mt-20"
         onSubmit={onSubmit}
         googleRegister={googleRegister}
       />

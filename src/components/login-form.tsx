@@ -12,16 +12,19 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import LoadingSmall from "./LoadingSmall";
 
 interface AllProps extends React.ComponentProps<"div"> {
   onSubmit: (event: React.FormEvent) => void;
   googleLogin: () => void;
+  isLoading: boolean;
 }
 
 export function LoginForm({
   className,
   onSubmit,
   googleLogin,
+  isLoading,
   ...props
 }: AllProps) {
   const [isView, setIsView] = useState(false);
@@ -77,26 +80,34 @@ export function LoginForm({
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full cursor-pointer">
-                  Login
-                </Button>
-                <Button
-                  variant="outline"
-                  type="button"
-                  className="w-full"
-                  onClick={googleLogin}
-                >
-                  Login with Google
-                </Button>
+              {isLoading ? (
+                <div className="m-auto">
+                  <LoadingSmall />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Button type="submit" className="w-full cursor-pointer">
+                    Login
+                  </Button>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full"
+                    onClick={googleLogin}
+                  >
+                    Login with Google
+                  </Button>
+                </div>
+              )}
+            </div>
+            {!isLoading && (
+              <div className="mt-4 text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link to="/register" className="underline underline-offset-4">
+                  Sign up
+                </Link>
               </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link to="/register" className="underline underline-offset-4">
-                Sign up
-              </Link>
-            </div>
+            )}
           </form>
         </CardContent>
       </Card>

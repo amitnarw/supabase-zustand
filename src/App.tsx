@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
 import Home from "./page/Home";
 import Login from "./page/Login";
 import Register from "./page/Register";
@@ -8,7 +8,6 @@ import ThemeStartup from "./utils/theme-service";
 import useStore from "./utils/zustand_store";
 import NotFound from "./page/NotFound";
 import { useEffect } from "react";
-import type { JSX } from "react/jsx-runtime";
 import About from "./page/About";
 import Logout from "./page/Logout";
 import Navbar from "./components/Navbar";
@@ -18,34 +17,27 @@ import PaymentFailed from "./page/PaymentFailed";
 import Cart from "./page/Cart";
 import Orders from "./page/Orders";
 import LoadingSmall from "./components/LoadingSmall";
+import AuthCallback from "./page/AuthCallback";
+
+const ProtectRoutes = ({ user }: any) => {
+  if (user) {
+    return <Outlet />;
+  }
+  return <Navigate to={"/login"} replace />;
+};
+
+const AuthenticationRoutes = ({ user }: any) => {
+  if (user) {
+    return <Navigate to={"/"} replace />;
+  }
+  return <Outlet />;
+};
 
 function App() {
-  const { user, isUserDataLoading, initializeUser } = useStore();
-
+  const { user, isUserDataLoading, checkUserSessionLocal } = useStore();
   useEffect(() => {
-    initializeUser();
+    checkUserSessionLocal();
   }, []);
-
-  const CheckProtectedRoutes = (component: JSX.Element, auth: boolean) => {
-    if (!isUserDataLoading) {
-      if (user && auth) {
-        return <Navigate to={"/"} replace />;
-      } else if (user && !auth) {
-        return component;
-      } else if (!user && auth) {
-        return component;
-      } else if (!user && !auth) {
-        const hash = window.location.hash;
-        if (hash.includes("access_token")) {
-          return component;
-        } else {
-          return <Navigate to={"/login"} replace />;
-        }
-      } else {
-        return component;
-      }
-    }
-  };
 
   if (isUserDataLoading) {
     return (
@@ -56,46 +48,38 @@ function App() {
   }
 
   return (
-    <div>
+    <>
       <BrowserRouter>
         <Toaster />
         <ThemeStartup />
         <Navbar />
-        <div className="pt-20 overflow-hidden">
+        <div className="pt-20 overflow-hidden w-full">
           <Routes>
-            <Route
-              path="/"
-              element={CheckProtectedRoutes(<Home />, false)}
-            ></Route>
-            <Route
-              path="/login"
-              element={CheckProtectedRoutes(<Login />, true)}
-            ></Route>
-            <Route
-              path="/register"
-              element={CheckProtectedRoutes(<Register />, true)}
-            ></Route>
-            <Route
-              path="/logout"
-              element={CheckProtectedRoutes(<Logout />, false)}
-            ></Route>
-            <Route
-              path="/cart"
-              element={CheckProtectedRoutes(<Cart />, false)}
-            ></Route>
-            <Route
-              path="/orders"
-              element={CheckProtectedRoutes(<Orders />, false)}
-            ></Route>
+            <Route element={<ProtectRoutes user={user} />}>
+              <Route path="/" element={<Home />}></Route>
+              <Route path="/home" element={<Navigate to={"/"} />}></Route>
+              <Route path="/logout" element={<Logout />}></Route>
+              <Route path="/cart" element={<Cart />}></Route>
+              <Route path="/orders" element={<Orders />}></Route>
+              <Route
+                path="/payment-success"
+                element={<PaymentSuccess />}
+              ></Route>
+              <Route path="/payment-failed" element={<PaymentFailed />}></Route>
+            </Route>
+            <Route element={<AuthenticationRoutes user={user} />}>
+              <Route path="/login" element={<Login />}></Route>
+              <Route path="/register" element={<Register />}></Route>
+            </Route>
+
             <Route path="/contact" element={<Contact />}></Route>
             <Route path="/about" element={<About />}></Route>
-            <Route path="/payment-success" element={<PaymentSuccess />}></Route>
-            <Route path="/payment-failed" element={<PaymentFailed />}></Route>
+            <Route path="/auth/callback" element={<AuthCallback />}></Route>
             <Route path="*" element={<NotFound />}></Route>
           </Routes>
         </div>
       </BrowserRouter>
-    </div>
+    </>
   );
 }
 

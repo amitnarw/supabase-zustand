@@ -3,7 +3,7 @@ import useStore, { type OrdersData } from "@/utils/zustand_store";
 import { useEffect, useState } from "react";
 
 const Orders = () => {
-  const { showToast, isStateLoading, getAllOrders } = useStore();
+  const { showToast, isAllOrdersLoading, getAllOrders } = useStore();
   const [orders, setOrders] = useState<null | OrdersData[]>(null);
 
   useEffect(() => {
@@ -18,27 +18,44 @@ const Orders = () => {
       setOrders(data);
     }
   };
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold">ORDERS</h1>
-      {isStateLoading ? (
-        <LoadingSmall />
+    <div className="flex flex-col items-center justify-center w-full">
+      <h1 className="text-4xl font-bold">ORDERS</h1>
+      {isAllOrdersLoading ? (
+        <div className="flex items-center justify-center mt-20 w-full">
+          <LoadingSmall />
+        </div>
+      ) : !orders || orders?.length < 1 ? (
+        <p className="mt-5 text-gray-500 text-xl">No order found</p>
       ) : (
-        <ul className="flex flex-col gap-4 w-[800px] m-auto mt-5">
+        <ul className="flex flex-col items-center justify-center gap-4 w-full mt-5 px-5">
           {orders?.map((order) => (
             <li
               key={order?.id}
-              className="flex flex-row gap-2 border rounded-xl overflow-hidden text-start w-full"
+              className="flex flex-row gap-2 border rounded-xl overflow-hidden text-start pr-2 mx-5 min-w-[300px] max-w-[800px] w-full"
             >
-              <span className="bg-purple-100 p-1 px-8 flex items-center justify-center text-2xl rounded-xl text-purple-600">
-                {order?.id}
-              </span>
+              <p className="bg-purple-100 dark:bg-purple-500/20 p-1 px-4 sm:px-8 flex items-center justify-center rounded-xl text-purple-600 flex flex-col">
+                <span className="font-bold text-2xl">
+                  {new Date(order?.created_at)?.getDate()?.toLocaleString()}
+                </span>
+                <span className="font-medium text-xl">
+                  {new Date(order?.created_at)?.toLocaleString("default", {
+                    month: "long",
+                  })}
+                </span>
+                <span>
+                  {new Date(order?.created_at)?.getFullYear()?.toLocaleString()}
+                </span>
+              </p>
               <div className="p-2 w-full">
-                <div className="flex flex-row items-center justify-between w-full">
-                  <p>Order id: #{order?.id}</p>
-
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full">
                   <p>
-                    <span>Status: </span>
+                    <span>Order id: </span>
+                    <span className="font-medium">#{order?.id}</span>
+                  </p>
+                  <p>
+                    <span>Payment: </span>
                     <span
                       className={`font-medium ${
                         order?.payments?.[0]?.status === "Completed"
@@ -52,15 +69,10 @@ const Orders = () => {
                     </span>
                   </p>
                 </div>
-                <p>
-                  <span>Order data: </span>
-                  <span>
-                    {new Date(order?.created_at)?.toLocaleDateString()}
-                  </span>
-                </p>
-                <ul className="w-full flex flex-row gap-2">
+
+                <ul className="w-full flex flex-row gap-2 mt-2 items-center">
                   {order?.order_items?.map((order_item) => (
-                    <li>
+                    <li key={order_item?.id}>
                       <img
                         src={order_item?.image}
                         alt={order_item?.id?.toString()}
@@ -68,6 +80,10 @@ const Orders = () => {
                       />
                     </li>
                   ))}
+                  <span className="text-gray-500 line-clamp-1 ml-1 text-sm">
+                    {order?.order_items?.length}{" "}
+                    {order?.order_items?.length > 1 ? "items" : "item"}
+                  </span>
                 </ul>
               </div>
             </li>

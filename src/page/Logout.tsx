@@ -1,13 +1,17 @@
 import useStore from "@/utils/zustand_store";
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 const Logout = () => {
-  const { logout, setIsStateLoading } = useStore();
+  const { user, logout } = useStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setIsStateLoading(true);
-    logout();
-    setIsStateLoading(false);
+    if (user) {
+      logout();
+    } else {
+      navigate("/login")
+    }
   }, []);
   return null;
 };

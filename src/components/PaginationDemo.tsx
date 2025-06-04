@@ -2,10 +2,8 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
+import { SelectDemo } from "./SelectDemo";
 
 interface PaginationAttribues {
   page: number;
@@ -25,13 +23,17 @@ export function PaginationDemo({
   getAllProduct,
 }: PaginationAttribues) {
   return (
-    <Pagination>
+    <Pagination className="flex flex-row items-center justify-between px-2 sm:px-28">
+      <div>
+        <SelectDemo pageSize={pageSize} setPageSize={setPageSize} />
+      </div>
       <PaginationContent>
         {Array.from({ length: Math.ceil(count / pageSize) }).map((_, index) => (
           <PaginationItem key={index}>
             <p
               className={`px-3.5 py-1.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 duration-300 ${
-                index + 1 === page && "border border-gray-300 dark:border-gray-600"
+                index + 1 === page &&
+                "border border-gray-300 dark:border-gray-600"
               }`}
               onClick={() => {
                 setPage(index + 1);
