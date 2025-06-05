@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import supabase from "./supabase";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 export interface OrdersData {
   id: number;
@@ -75,9 +76,27 @@ export interface CartItems {
   };
 }
 
+export interface ChatData {
+  id: number;
+  sender_user_id: string;
+  receiver_user_id: string;
+  status: string;
+  created_at: string;
+  messages: MessageData[];
+}
+
+export interface MessageData {
+  id: number;
+  chat_id: number;
+  message: string;
+  user_id: string;
+  created_at: Date;
+  attachment_urls: null;
+}
+
 interface StoreTypes {
   isUserDataLoading: boolean;
-  user: any | null;
+  user: User | null;
   theme: string;
   showToast: (value: string) => void;
   error: string | null;
@@ -137,6 +156,28 @@ interface StoreTypes {
     data: OrdersData[] | null;
     error: any;
   }>;
+  globalChannel: any | null;
+  onlineUsers: {
+    [userId: string]: {
+      name: string;
+      user_id: string;
+      presence_ref: string;
+    }[];
+  } | null;
+  userTyping: { user_id: string; isTyping: boolean } | null;
+  createGlobalChannel: () => void;
+  sendTyping: (isTyping: boolean) => void;
+  chatLoading: boolean;
+  getChat: () => Promise<{
+    data: ChatData[] | null;
+    error: any;
+  }>;
+  newMessage: MessageData | null;
+  subscribeToChat: () => void;
+  sendMessage: (
+    chat_id: number,
+    message: string
+  ) => Promise<{ data: any; error: any }>;
 }
 
 const useStore = create<StoreTypes>((set, get) => ({
@@ -201,7 +242,7 @@ const useStore = create<StoreTypes>((set, get) => ({
       .from("products")
       .select(`*, cart (user_id, product_id)`, { count: "exact" })
       .range((get().page - 1) * get().pageSize, get().page * get().pageSize - 1)
-      .eq("cart.user_id", get().user.id);
+      .eq("cart.user_id", get().user?.id);
     set({ isAllProductLoading: false, allProducts: { data, count, error } });
     return { data, count, error };
   },
@@ -338,6 +379,79 @@ const useStore = create<StoreTypes>((set, get) => ({
       .select(`*, order_items(*), payments (*)`)
       .eq("user_id", get().user?.id);
     set({ isAllOrdersLoading: false });
+    return { data, error };
+  },
+
+  globalChannel: null,
+  onlineUsers: null,
+  userTyping: null,
+  createGlobalChannel: async () => {
+    const channel = supabase.channel("global-channel", {
+      config: {
+        presence: { key: get().user?.id },
+      },
+    });
+
+    set({ globalChannel: channel });
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channel.track({
+          user_id: get().user?.id,
+          name: get().user?.user_metadata?.name,
+        });
+      }
+    });
+    channel.on("presence", { event: "sync" }, () => {
+      set({ onlineUsers: channel.presenceState() });
+    });
+    channel.on("broadcast", { event: "typing" }, (payload) => {
+      // set({ userTyping: payload });
+      console.log(payload, "2222222222222222222");
+    });
+  },
+  sendTyping: (isTyping: boolean) => {
+    get().globalChannel.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user_id: get().user?.id, isTyping },
+    });
+  },
+  chatLoading: false,
+  getChat: async () => {
+    set({ chatLoading: true });
+    const { data, error } = await supabase
+      .from("chats")
+      .select(`*, messages(*)`)
+      .match({
+        sender_user_id: "7290fcab-d5c5-4e20-ae0b-d066f86098a1",
+        receiver_user_id: "fa4ae1cd-a987-4d9b-af83-a55c30a20dda",
+      });
+    set({ chatLoading: false });
+    return { data, error };
+  },
+  newMessage: null,
+  subscribeToChat: () => {
+    console.log("subbbbbbbbbbbb");
+    const messages = supabase
+      .channel("message-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          set({ newMessage: payload?.new as MessageData });
+          console.log(payload, "0000000000000");
+        }
+      )
+      .subscribe();
+  },
+  sendMessage: async (chat_id: number, message: string) => {
+    const { data, error } = await supabase
+      .from("messages")
+      .insert([{ chat_id, message, user_id: get().user?.id }]);
     return { data, error };
   },
 }));
