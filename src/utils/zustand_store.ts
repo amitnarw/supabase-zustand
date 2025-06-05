@@ -405,7 +405,7 @@ const useStore = create<StoreTypes>((set, get) => ({
       set({ onlineUsers: channel.presenceState() });
     });
     channel.on("broadcast", { event: "typing" }, (payload) => {
-      // set({ userTyping: payload });
+      set({ userTyping: payload?.payload });
       console.log(payload, "2222222222222222222");
     });
   },

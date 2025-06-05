@@ -136,16 +136,18 @@ export function CardsChat({
                 </div>
               ))
             )}
-            <div
-              className={cn(
-                "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                message?.user_id === user?.id
-                  ? "ml-auto bg-primary text-primary-foreground"
-                  : "bg-muted"
-              )}
-            >
-              <TypingAnimation />
-            </div>
+            {userTyping?.isTyping && (
+              <div
+                className={cn(
+                  "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                  userTyping?.user_id === user?.id
+                    ? "ml-auto bg-primary text-primary-foreground"
+                    : "bg-muted"
+                )}
+              >
+                <TypingAnimation />
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter>
