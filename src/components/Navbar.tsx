@@ -33,14 +33,14 @@ const Navbar = () => {
     },
     {
       title: "Login",
-      route: "/login",
+      route: "/auth/login",
       showTo: "loggedOut",
       style: "bg-green-500 text-white",
     },
     { title: "Cart", route: "/cart", showTo: "loggedIn" },
     {
       title: "Register",
-      route: "/register",
+      route: "/auth/register",
       showTo: "loggedOut",
       style: "bg-black text-white dark:bg-white dark:text-black",
     },

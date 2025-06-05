@@ -33,7 +33,7 @@ const Register = () => {
       if (error) {
         toast(error?.message);
       } else {
-        router("/login");
+        router("/auth/login");
       }
     }
   };

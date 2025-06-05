@@ -7,7 +7,7 @@ import { Toaster } from "./components/ui/sonner";
 import ThemeStartup from "./utils/theme-service";
 import useStore from "./utils/zustand_store";
 import NotFound from "./page/NotFound";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import About from "./page/About";
 import Logout from "./page/Logout";
 import Navbar from "./components/Navbar";
@@ -18,12 +18,14 @@ import Cart from "./page/Cart";
 import Orders from "./page/Orders";
 import LoadingSmall from "./components/LoadingSmall";
 import AuthCallback from "./page/AuthCallback";
+import { CardsChat } from "./components/Chat";
+import { MessagesSquare } from "lucide-react";
 
 const ProtectRoutes = ({ user }: any) => {
   if (user) {
     return <Outlet />;
   }
-  return <Navigate to={"/login"} replace />;
+  return <Navigate to={"/auth/login"} replace />;
 };
 
 const AuthenticationRoutes = ({ user }: any) => {
@@ -35,6 +37,8 @@ const AuthenticationRoutes = ({ user }: any) => {
 
 function App() {
   const { user, isUserDataLoading, checkUserSessionLocal } = useStore();
+  const [openChat, setOpenChat] = useState(false);
+
   useEffect(() => {
     checkUserSessionLocal();
   }, []);
@@ -68,8 +72,8 @@ function App() {
               <Route path="/payment-failed" element={<PaymentFailed />}></Route>
             </Route>
             <Route element={<AuthenticationRoutes user={user} />}>
-              <Route path="/login" element={<Login />}></Route>
-              <Route path="/register" element={<Register />}></Route>
+              <Route path="/auth/login" element={<Login />}></Route>
+              <Route path="/auth/register" element={<Register />}></Route>
             </Route>
 
             <Route path="/contact" element={<Contact />}></Route>
@@ -77,6 +81,18 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />}></Route>
             <Route path="*" element={<NotFound />}></Route>
           </Routes>
+        </div>
+        <div className="absolute bottom-5 right-5 z-100 fixed">
+          {openChat ? (
+            <CardsChat setOpenChat={setOpenChat} />
+          ) : (
+            <div
+              className="bg-purple-400 hover:bg-purple-600 dark:bg-purple-900 dark:hover:bg-purple-700 p-4 hover:scale-110 duration-300 rounded-full cursor-pointer"
+              onClick={() => setOpenChat(true)}
+            >
+              <MessagesSquare color="white" size={20} />
+            </div>
+          )}
         </div>
       </BrowserRouter>
     </>

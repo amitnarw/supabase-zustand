@@ -10,7 +10,7 @@ const Logout = () => {
     if (user) {
       logout();
     } else {
-      navigate("/login")
+      navigate("/auth/login")
     }
   }, []);
   return null;
