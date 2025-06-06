@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 const Home = () => {
   const {
     user,
-    initializeUser,
     isAllProductLoading,
     getAllProduct,
     page,
@@ -127,11 +126,13 @@ const Home = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center text-sm">
-                      <span className="bg-green-600 text-white text-xs px-1.5 rounded mr-1">
-                        {item?.avg_rating} ★
-                      </span>
-                    </div>
+                    {item?.avg_rating && (
+                      <div className="flex items-center text-sm">
+                        <span className="bg-green-600 text-white text-xs px-1.5 rounded mr-1">
+                          {item?.avg_rating} ★
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

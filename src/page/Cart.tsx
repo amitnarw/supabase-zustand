@@ -1,5 +1,6 @@
 import LoadingIcon from "@/components/LoadingIcon";
 import LoadingSmall from "@/components/LoadingSmall";
+import supabase from "@/utils/supabase";
 import useStore, { type CartItems } from "@/utils/zustand_store";
 import { Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -29,7 +30,19 @@ const Cart = () => {
 
   useEffect(() => {
     getAllCartItems();
+    fun();
   }, []);
+
+  const fun = async () => {
+    const { data, error } = await supabase
+      .from("payments")
+      .select(`id, orders (*)`)
+      .eq(
+        "session_id",
+        "cs_test_a1VgxRbplDSjX9C4duIe1VyDWQfv33iDjzjKELtPDaszn62uPXag8NIKEQ"
+      );
+    console.log(data, error, "ppppppppppp");
+  };
 
   const getAllCartItems = async () => {
     const resp = cartData?.data ? cartData : await getCart();
@@ -69,7 +82,7 @@ const Cart = () => {
     );
 
     if (error) {
-      showToast(error?.message);
+      showToast(error?.message, "error");
     } else {
       window.location.href = data?.url;
     }
@@ -81,7 +94,7 @@ const Cart = () => {
         <div className="flex flex-col gap-5 mt-2 w-full lg:w-4/6">
           <h1 className="font-bold text-4xl text-start">CART</h1>
           <ul className="flex flex-col gap-2 items-center">
-            {!cart?.data || (cart?.count && cart?.count < 1) ? (
+            {!cart?.data || Number(cart?.count) < 1 ? (
               <p className="text-gray-500 text-start text-xl w-full">
                 Cart is Empty
               </p>
@@ -177,7 +190,7 @@ const Cart = () => {
             )}
           </ul>
         </div>
-        {cart?.count && cart?.count > 0 && (
+        {Number(cart?.count) > 0 && (
           <div className="flex flex-col text-start lg:mt-16 w-full lg:w-2/6 mb-16">
             <h1 className="font-bold text-2xl mb-2">Summary</h1>
             <p className="flex flex-row items-center justify-between mb-1">

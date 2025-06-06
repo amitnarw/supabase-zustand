@@ -20,6 +20,7 @@ import LoadingSmall from "./components/LoadingSmall";
 import AuthCallback from "./page/AuthCallback";
 import { CardsChat } from "./components/Chat";
 import { MessagesSquare } from "lucide-react";
+import AddProduct from "./page/AddProduct";
 
 const ProtectRoutes = ({ user }: any) => {
   if (user) {
@@ -54,7 +55,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Toaster />
+        <Toaster richColors />
         <ThemeStartup />
         <Navbar />
         <div className="pt-20 overflow-hidden w-full">
@@ -65,6 +66,7 @@ function App() {
               <Route path="/logout" element={<Logout />}></Route>
               <Route path="/cart" element={<Cart />}></Route>
               <Route path="/orders" element={<Orders />}></Route>
+              <Route path="/admin/add-product" element={<AddProduct />}></Route>
               <Route
                 path="/payment-success"
                 element={<PaymentSuccess />}
@@ -82,18 +84,20 @@ function App() {
             <Route path="*" element={<NotFound />}></Route>
           </Routes>
         </div>
-        <div className="absolute bottom-5 right-5 z-100 fixed">
-          {openChat ? (
-            <CardsChat setOpenChat={setOpenChat} />
-          ) : (
-            <div
-              className="bg-purple-400 hover:bg-purple-600 dark:bg-purple-900 dark:hover:bg-purple-700 p-4 hover:scale-110 duration-300 rounded-full cursor-pointer"
-              onClick={() => setOpenChat(true)}
-            >
-              <MessagesSquare color="white" size={20} />
-            </div>
-          )}
-        </div>
+        {user && (
+          <div className="absolute bottom-5 right-5 z-100 fixed">
+            {openChat ? (
+              <CardsChat setOpenChat={setOpenChat} />
+            ) : (
+              <div
+                className="bg-purple-400 hover:bg-purple-600 dark:bg-purple-900 dark:hover:bg-purple-700 p-4 hover:scale-110 duration-300 rounded-full cursor-pointer"
+                onClick={() => setOpenChat(true)}
+              >
+                <MessagesSquare color="white" size={20} />
+              </div>
+            )}
+          </div>
+        )}
       </BrowserRouter>
     </>
   );

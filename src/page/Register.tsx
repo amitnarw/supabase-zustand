@@ -1,11 +1,12 @@
 import LoadingIcon from "@/components/LoadingIcon";
 import { RegisterForm } from "@/components/register-form";
 import supabase from "@/utils/supabase";
+import useStore from "@/utils/zustand_store";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 const Register = () => {
+  const { showToast } = useStore();
   const router = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,7 +18,7 @@ const Register = () => {
     let password = formData.get("password")?.toString();
 
     if (!name || !email || !password) {
-      toast("Please provide name, email and password");
+      showToast("Please provide name, email and password", "error");
     } else {
       setIsLoading(true);
       let { error } = await supabase.auth.signUp({
@@ -26,14 +27,15 @@ const Register = () => {
         options: {
           data: {
             name,
+            role: "user",
           },
         },
       });
       setIsLoading(false);
       if (error) {
-        toast(error?.message);
+        showToast(error?.message, "error");
       } else {
-        router("/auth/login");
+        router("/");
       }
     }
   };
@@ -48,7 +50,7 @@ const Register = () => {
       },
     });
     if (error) {
-      toast("Error while registering");
+      showToast("Error while google registering: " + error?.message, "error");
     }
   };
 

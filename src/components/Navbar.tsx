@@ -25,6 +25,7 @@ const Navbar = () => {
     { title: "Contact us", route: "/contact", showTo: "all" },
     { title: "About us", route: "/about", showTo: "all" },
     { title: "Orders", route: "/orders", showTo: "loggedIn" },
+    { title: "Add Product", route: "/admin/add-product", showTo: "admin" },
     {
       title: "Logout",
       route: "/logout",
@@ -53,7 +54,7 @@ const Navbar = () => {
         {user && (
           <Link to={"/cart"} className="relative">
             <p className="mt-1 mx-2">
-              {cartCount && cartCount > 0 && (
+              {Number(cartCount) > 0 && (
                 <span className="bg-red-500 text-white rounded-full text-[10px] py-0.5 px-1.5 absolute right-[-5px] top-[-10px]">
                   {cartCount}
                 </span>
@@ -70,6 +71,7 @@ const Navbar = () => {
         {menuList?.map(
           (item, index) =>
             ((user && item?.showTo === "loggedIn") ||
+              (user && user?.user_metadata?.role === "admin" && item?.showTo === "admin") ||
               (!user && item?.showTo === "loggedOut") ||
               item?.showTo === "all") &&
             (item?.title !== "Cart" ? (
@@ -89,7 +91,7 @@ const Navbar = () => {
               <li key={item?.route + index}>
                 <Link to={item?.route} className="relative">
                   <p className="mt-1 mx-2">
-                    {cartCount && cartCount > 0 && (
+                    {Number(cartCount) > 0 && (
                       <span className="bg-red-500 text-white rounded-full text-[10px] py-0.5 px-1.5 absolute right-[-5px] top-[-10px]">
                         {cartCount}
                       </span>

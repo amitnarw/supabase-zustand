@@ -94,11 +94,21 @@ export interface MessageData {
   attachment_urls: null;
 }
 
+export interface ProductData {
+  name: string;
+  description: string;
+  brand: string;
+  original_price: number;
+  discounted_price: number;
+  image: string;
+  quantity: number;
+}
+
 interface StoreTypes {
   isUserDataLoading: boolean;
   user: User | null;
   theme: string;
-  showToast: (value: string) => void;
+  showToast: (text: string, type: "success" | "error") => void;
   error: string | null;
   page: number;
   pageSize: number;
@@ -174,18 +184,23 @@ interface StoreTypes {
   }>;
   newMessage: MessageData | null;
   subscribeToChat: () => void;
+  isLoadingSendMessage: boolean;
   sendMessage: (
     chat_id: number,
     message: string
   ) => Promise<{ data: any; error: any }>;
+  isLoadingAddProduct: boolean;
+  addProduct: (productData: ProductData) => Promise<{ data: any; error: any }>;
+  isLoadingUploadFile: boolean;
+  uploadFile: (file: File) => Promise<{ publicUrl: string }>;
 }
 
 const useStore = create<StoreTypes>((set, get) => ({
   isUserDataLoading: true,
   user: null,
   theme: "light",
-  showToast: (value) => {
-    toast(value);
+  showToast: (text, type) => {
+    toast[type](text);
   },
   error: null,
   page: 1,
@@ -242,7 +257,8 @@ const useStore = create<StoreTypes>((set, get) => ({
       .from("products")
       .select(`*, cart (user_id, product_id)`, { count: "exact" })
       .range((get().page - 1) * get().pageSize, get().page * get().pageSize - 1)
-      .eq("cart.user_id", get().user?.id);
+      .eq("cart.user_id", get().user?.id)
+      .order("id", { ascending: false });
     set({ isAllProductLoading: false, allProducts: { data, count, error } });
     return { data, count, error };
   },
@@ -406,7 +422,6 @@ const useStore = create<StoreTypes>((set, get) => ({
     });
     channel.on("broadcast", { event: "typing" }, (payload) => {
       set({ userTyping: payload?.payload });
-      console.log(payload, "2222222222222222222");
     });
   },
   sendTyping: (isTyping: boolean) => {
@@ -423,16 +438,15 @@ const useStore = create<StoreTypes>((set, get) => ({
       .from("chats")
       .select(`*, messages(*)`)
       .match({
-        sender_user_id: "7290fcab-d5c5-4e20-ae0b-d066f86098a1",
-        receiver_user_id: "fa4ae1cd-a987-4d9b-af83-a55c30a20dda",
+        sender_user_id: "48dff567-670b-458d-a06c-ccb729e8b5ba",
+        receiver_user_id: "f8c2da7f-6722-4bc7-953b-8f6c108ebe14",
       });
     set({ chatLoading: false });
     return { data, error };
   },
   newMessage: null,
   subscribeToChat: () => {
-    console.log("subbbbbbbbbbbb");
-    const messages = supabase
+    supabase
       .channel("message-channel")
       .on(
         "postgres_changes",
@@ -443,16 +457,47 @@ const useStore = create<StoreTypes>((set, get) => ({
         },
         (payload) => {
           set({ newMessage: payload?.new as MessageData });
-          console.log(payload, "0000000000000");
         }
       )
       .subscribe();
   },
-  sendMessage: async (chat_id: number, message: string) => {
+  isLoadingSendMessage: false,
+  sendMessage: async (chat_id, message) => {
+    set({ isLoadingSendMessage: true });
     const { data, error } = await supabase
       .from("messages")
       .insert([{ chat_id, message, user_id: get().user?.id }]);
+    set({ isLoadingSendMessage: false });
     return { data, error };
+  },
+  isLoadingAddProduct: false,
+  addProduct: async (productData) => {
+    set({ isLoadingAddProduct: true });
+    const { data, error } = await supabase
+      .from("products")
+      .insert([productData]);
+    set({ isLoadingAddProduct: false });
+    return { data, error };
+  },
+  isLoadingUploadFile: false,
+  uploadFile: async (file) => {
+    set({ isLoadingUploadFile: true });
+    const { data, error } = await supabase.storage
+      .from("test-bucket")
+      .upload(`/product-images/${Date.now()}+${file?.name}`, file);
+    set({ isLoadingUploadFile: false });
+    if (error) {
+      get().showToast(
+        "Error while uploading image: " + error?.message,
+        "error"
+      );
+      return { publicUrl: "" };
+    } else {
+      const { data: data1 } = await supabase.storage
+        .from("test-bucket")
+        .getPublicUrl(data?.path);
+      return { publicUrl: data1?.publicUrl };
+    }
   },
 }));
 

@@ -10,13 +10,14 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import useStore, {
   type ChatData,
   type MessageData,
 } from "@/utils/zustand_store";
 import LoadingSmall from "./LoadingSmall";
 import { TypingAnimation } from "./TypingAnimation";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 export function CardsChat({
   setOpenChat,
@@ -33,9 +34,12 @@ export function CardsChat({
     sendTyping,
     createGlobalChannel,
     subscribeToChat,
+    isLoadingSendMessage,
     sendMessage,
     newMessage,
   } = useStore();
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const [input, setInput] = useState("");
   const inputLength = input.trim().length;
@@ -49,31 +53,43 @@ export function CardsChat({
   }, []);
 
   useEffect(() => {
-    let oldArray = message;
     if (newMessage) {
-      oldArray?.push(newMessage);
-      setMessage(oldArray);
+      setMessage((preVal) => [...(preVal || []), newMessage]);
+      scrollToBottom();
     }
   }, [newMessage]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [message]);
 
   const getCustomerCareChat = async () => {
     let { data, error } = await getChat();
     if (error) {
-      showToast("Error: " + error);
+      showToast("Error: " + error, "error");
     } else {
       setChat(data);
       setMessage(data ? data?.[0]?.messages : null);
       subscribeToChat();
+      scrollToBottom();
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (e: FormEvent) => {
+    e.preventDefault();
     sendMessage(Number(chat?.[0]?.id), input);
+    setInput("");
+  };
+
+  const scrollToBottom = () => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
     <div>
-      <Card className="py-4 min-w-[300px] max-w-[500px] w-full">
+      <Card className="py-4 min-w-[300px] max-w-[500px] w-full ">
         <CardHeader className="flex flex-row items-center pr-2 pl-4">
           <div className="flex flex-row items-center justify-between w-full">
             <div className="flex items-center space-x-2">
@@ -113,43 +129,49 @@ export function CardsChat({
             </button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {chatLoading ? (
-              <div className="w-full flex items-center justify-center">
-                <LoadingSmall />
-              </div>
-            ) : !message || message?.length < 1 ? (
-              <p className="text-gray-500 text-sm">No messages found</p>
-            ) : (
-              message?.map((message, index) => (
+
+        <CardContent className="px-0">
+          <ScrollArea>
+            <div className="space-y-4 max-h-[350px] min-h-20 px-6">
+              {chatLoading ? (
+                <div className="w-full flex items-center justify-center">
+                  <LoadingSmall />
+                </div>
+              ) : !message || message.length < 1 ? (
+                <p className="text-gray-500 text-sm">No messages found</p>
+              ) : (
+                message.map((message, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                      message.user_id === user?.id
+                        ? "ml-auto bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    )}
+                  >
+                    {message.message}
+                  </div>
+                ))
+              )}
+              {userTyping?.isTyping && (
                 <div
-                  key={index}
                   className={cn(
                     "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                    message?.user_id === user?.id
+                    userTyping.user_id === user?.id
                       ? "ml-auto bg-primary text-primary-foreground"
                       : "bg-muted"
                   )}
                 >
-                  {message?.message}
+                  <TypingAnimation />
                 </div>
-              ))
-            )}
-            {userTyping?.isTyping && (
-              <div
-                className={cn(
-                  "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                  userTyping?.user_id === user?.id
-                    ? "ml-auto bg-primary text-primary-foreground"
-                    : "bg-muted"
-                )}
-              >
-                <TypingAnimation />
-              </div>
-            )}
-          </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+            <ScrollBar orientation="vertical" />
+          </ScrollArea>
         </CardContent>
+
         <CardFooter>
           <form className="flex w-full items-center space-x-2">
             <Input
@@ -162,15 +184,19 @@ export function CardsChat({
               onFocus={() => sendTyping(true)}
               onBlur={() => sendTyping(false)}
             />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={inputLength === 0}
-              onClick={handleSendMessage}
-            >
-              <Send />
-              <span className="sr-only">Send</span>
-            </Button>
+            {isLoadingSendMessage ? (
+              <LoadingSmall w={20} h={20} />
+            ) : (
+              <Button
+                type="submit"
+                size="icon"
+                disabled={inputLength === 0}
+                onClick={handleSendMessage}
+              >
+                <Send />
+                <span className="sr-only">Send</span>
+              </Button>
+            )}
           </form>
         </CardFooter>
       </Card>

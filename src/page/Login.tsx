@@ -3,10 +3,9 @@ import supabase from "@/utils/supabase";
 import useStore from "@/utils/zustand_store";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 const Login = () => {
-  const { setUserData } = useStore();
+  const { showToast, setUserData } = useStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,7 +15,7 @@ const Login = () => {
     const email = formData.get("email")?.toString();
     const password = formData.get("password")?.toString();
     if (!email || !password) {
-      toast("Please write email and password to login");
+      showToast("Please write email and password to login", "error");
     } else {
       setIsLoading(true);
       let { data, error } = await supabase.auth.signInWithPassword({
@@ -26,8 +25,9 @@ const Login = () => {
       setIsLoading(false);
       setUserData(data?.user, data?.session);
       if (error) {
-        toast.error(error?.message);
+        showToast(error?.message, "error");
       } else {
+        showToast("Login success", "success");
         navigate("/");
       }
     }
@@ -43,7 +43,7 @@ const Login = () => {
       },
     });
     if (error) {
-      toast("Error while registering");
+      showToast("Error while google login: " + error?.message, "error");
     }
   };
 
