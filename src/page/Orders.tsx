@@ -13,7 +13,7 @@ const Orders = () => {
   const getOrders = async () => {
     const { data, error } = await getAllOrders();
     if (error) {
-      showToast(error);
+      showToast(error, "error");
     } else {
       setOrders(data);
     }

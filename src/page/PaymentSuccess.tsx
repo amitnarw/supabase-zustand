@@ -35,7 +35,7 @@ const PaymentSuccess = () => {
   let getPaymentStatusFromDatabase = async (session_id: string) => {
     const { data, error } = await checkPaymentStatusDatabase(session_id);
     if (error) {
-      showToast(error);
+      showToast(error, "error");
     } else {
       setDatabaseStatus(data?.[0]?.status);
     }
